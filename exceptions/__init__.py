@@ -1,2 +1,0 @@
-class UniEorrors(Exception):
-    pass

@@ -88,11 +88,11 @@ env/
 venv/
 ENV/
 
-# Spyder project settings
+# Spyder project st_settings
 .spyderproject
 .spyproject
 
-# Rope project settings
+# Rope project st_settings
 .ropeproject
 
 # mkdocs documentation
