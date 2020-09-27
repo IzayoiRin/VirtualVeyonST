@@ -26,7 +26,7 @@ def celery_refer():
     print(capp.tasks.keys())
     import sys
     sys.path.pop(0)
-    from test.tasks import organizer
+    from demo.tasks import organizer
     print(capp.tasks.keys())
 
 

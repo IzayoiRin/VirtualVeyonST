@@ -7,11 +7,11 @@ KERNELS = {
 }
 
 """ Global Volumes """
-DEFAULT_REGISTERS_MAP = "test._globals.REGISTERS"
-DEFAULT_RECORDS_LIST = "test._globals.RECORDS"
+DEFAULT_REGISTERS_MAP = "demo._globals.REGISTERS"
+DEFAULT_RECORDS_LIST = "demo._globals.RECORDS"
 
 """ Registered Tasks"""
-DEFAULT_TASKS_URLS = ["test.tasks.task", "test.tasks.task2@tk"]
+DEFAULT_TASKS_URLS = ["demo.tasks.task", "demo.tasks.task2@tk"]
 DEFAULT_TASK_PREFIX = "task"
 
 """ Config for Celery """

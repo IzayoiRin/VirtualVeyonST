@@ -20,5 +20,5 @@ CELERY = {
 
 """ Registered Tasks"""
 DEFAULT_TASKS_ROOT = r"C:/izayoi/prj_veyon/SwitchTracer"
-DEFAULT_TASKS_URLS = ["test.tasks.task1<task.*>", "test.tasks.task2<task.*>@tk", "test.tasks.tasks_test3"]
+DEFAULT_TASKS_URLS = ["demo.tasks.task1<task.*>", "demo.tasks.task2<task.*>@tk", "demo.tasks.tasks_test3"]
 DEFAULT_TASKS_PREFIX = "task"
