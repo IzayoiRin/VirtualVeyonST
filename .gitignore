@@ -3,6 +3,7 @@ logs/*.log
 test.py
 demo2.py
 # Byte-compiled / optimized / DLL files
+.idea/
 __pycache__/
 *.py[cod]
 *$py.class
