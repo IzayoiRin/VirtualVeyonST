@@ -4,7 +4,6 @@ LOG_LEVEL = "DEBUGS"
 KERNELWARES = {
     "basements": "universal.basements",
     "activators": "universal.activator",
-    "volumes": "universal.volumes",
     "celerys": "cores.utils.celerys",
     "flasks": "cores.utils.flask_",
 }

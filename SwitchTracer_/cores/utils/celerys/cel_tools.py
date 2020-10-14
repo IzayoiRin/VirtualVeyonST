@@ -11,6 +11,7 @@ from universal.exceptions import SettingErrors
 
 IS_PATH = re.compile(r'[\/\\]')
 
+
 def _get_celery_settings(env):
     settings = st.environ(env).settings.get("CELERY", None)
     if settings is None:
@@ -65,7 +66,12 @@ def load_tasks_from_urls(url, env=None):
     task_urls_routers(url, records=False, env=env)
 
 
+def init_organized_urls():
+    st.celerys.organized_urls = st.environ().settings["DEFAULT_TASKS_URLS"].copy()
+
+
 def load_tasks_from_organized_urls(env=None):
+    init_organized_urls()
     for i in st.celerys.organized_urls:
         if re.search(IS_PATH, i):
             load_tasks_from_path(i, env=env)

@@ -5,6 +5,7 @@ from importlib import import_module
 ROOT_DIR = os.path.dirname(__file__)
 DEFAULT_ENVIRON_KEY = os.path.split(ROOT_DIR)[-1]
 DEFAULT_SETTINGS_MODULE = "st_settings.dev.settings"
+VOLUMES = None
 
 
 class SetupError(Exception):
@@ -16,7 +17,7 @@ def environ(env_key=None):
     return getattr(import_module(settings.KERNELWARES["basements"]), "Environ")(env_key or DEFAULT_ENVIRON_KEY)
 
 
-def _setup():
+def setup():
     """Setup default environ for SwitchTracer_, including settings, kernel wares"""
     if os.environ.get(DEFAULT_SETTINGS_MODULE, None) is None:
         sys.path.append(ROOT_DIR)
@@ -45,12 +46,13 @@ def re_setup(covered=False, covered_key=None):
         try:
             del os.environ[covered_key]
             # TODO: RAISE WARNING MSG
-            print("covered the original key: %s " % covered_key)
+            print("warning: covered the original key: %s " % covered_key)
         except KeyError as e:
             raise SetupError("Can not find and cover the original key: %s" % e)
     os.environ[DEFAULT_ENVIRON_KEY] = DEFAULT_SETTINGS_MODULE
-    _setup()
+    setup()
 
 
-# setup default environ for SwitchTracer_
-_setup()
+if os.environ.get("CELERY_SETUP"):
+    print("INFO: setup celery tasks importing environ... ...")
+    setup()

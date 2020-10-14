@@ -1,5 +1,7 @@
 # project's dirs
 logs/*.log
+test.py
+demo2.py
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

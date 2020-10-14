@@ -1,6 +1,6 @@
 import SwitchTracer_ as st
 from cores.compents.recorders import Recorder
-from cores.compents.registers import _static_register, Register
+from cores.compents.registers import _static_register, SdcRegister
 from universal.exceptions import SettingErrors, KernelWaresSettingsErrors
 
 
@@ -9,53 +9,35 @@ class SenderCenterMeta(type):
 
     def __new__(mcs, name, bases, kw_attrs):
         if mcs.__is_single or kw_attrs.get("_is_reload", False):
-            kw_attrs["__registers"] = kw_attrs.get("_default_registers_map") or getattr(st.volumes, "REGISTERS")
-            if kw_attrs["__registers"] is None:
-                raise KernelWaresSettingsErrors("No REGISTERS Map has been found!")
-
+            kw_attrs["VOLUMES"] = kw_attrs.get("_default_global_volumes") or st.VOLUMES
             settings = st.environ(kw_attrs.get("_environ", None)).settings
-
             if settings.get("DEFAULT_TASKS_URLS") is None:
                 raise SettingErrors("Can not find settings.TASKS refers!")
-
-            for url in kw_attrs.get("_default_tasks_urls") or settings["DEFAULT_TASKS_URLS"]:
-                _static_register(url, kw_attrs["__registers"])
-
-            kw_attrs["__records"] = kw_attrs.get("_default_records_list") or getattr(st.volumes, "RECORDS")
-            if kw_attrs["__records"] is None:
-                raise KernelWaresSettingsErrors("No RECORDS List has been found!")
-
+            kw_attrs["_TASKS"] = kw_attrs.get("_default_tasks_urls") or settings["DEFAULT_TASKS_URLS"]
         mcs.__is_single = False
         kw_attrs["_is_reload"] = False
         return type(name, bases, kw_attrs)
 
 
 class SenderCenterBase(object, metaclass=SenderCenterMeta):
-    _default_registers_map = None
-    _default_records_list = None
+    _default_global_volumes = None
     _default_tasks_urls = None
     _environ = None
+    _gvol = None
 
     def __new__(cls, *args, **kwargs):
-        rgmap = cls._get_registers_map()
-        if rgmap is None:
-            raise KernelWaresSettingsErrors("No REGISTERS Map has been found!")
-        recls = cls._get_records_list()
-        if recls is None:
-            raise KernelWaresSettingsErrors("No RECORDS List has been found!")
+        cls._gvol = getattr(cls, "VOLUMES", None)
+        if cls._gvol is None:
+            raise KernelWaresSettingsErrors("No VOLUMES has been Linked!")
         return super().__new__(cls)
-
-    def __init__(self):
-        # TODO: SenderCenterBase initial params
-        pass
-
-    @classmethod
-    def _get_registers_map(cls):
-        return getattr(cls, "__registers")
 
     @classmethod
     def _get_records_list(cls):
-        return getattr(cls, "__records")
+        return cls._gvol.RECORDS
+
+    @classmethod
+    def _get_registers_map(cls):
+        return cls._gvol.REGISTERS
 
     @classmethod
     def static_register(cls, *tasks_urls):
@@ -64,40 +46,57 @@ class SenderCenterBase(object, metaclass=SenderCenterMeta):
         for url in tasks_urls:
             _static_register(url, cls._get_registers_map())
 
+    def __init__(self):
+        # TODO: SenderCenterBase initial params
+        if not self._get_registers_map():
+            return
+        for url in getattr(self, "_TASKS"):
+            _static_register(url, self._get_registers_map())
+
+    @property
+    def id(self):
+        return hex(id(self))
+
     def dynamic_register(self, name, task):
         # TODO: Dynamic register core
         pass
 
 
 class GenericSenderCenter(SenderCenterBase):
+
     register_class = None
     recorder_class = None
 
-    # metaclass=SenderCenterMeta
-    _is_reload = False
-
-    def __init__(self):
+    def __init__(self, factory=False):
         self._rname = None
         self._creg = None
+        self.factory = factory
         super().__init__()
 
+    def is_factory(self):
+        return self.factory
+
     def __str__(self):
-        return "@{sender}:{creg}<{greg}->{grec}>".format(
+        return "@{sender}{factory}:<{greg}&&{grec}>".format(
             sender=self.__class__.__name__,
-            creg=self.get_register().task.name,
-            greg=self._get_registers_map().id,
-            grec=self._get_records_list().id
+            factory="[Factory]" if self.factory else "",
+            greg=self._get_registers_map().id(),
+            grec=self._get_records_list().id()
         )
 
     def load(self, name, fn):
         self.dynamic_register(name=name, task=fn)
 
     def set_register(self, name):
+        if self.factory:
+            ins = self.__class__()
+            ins._rname = name
+            return ins
         self._rname = name
         return self
 
     def get_register_class(self):
-        return self.register_class
+        return self.register_class.link2gvol(self._get_registers_map())
 
     def get_register(self):
         self._creg = self.get_register_class()(key=self._rname)
@@ -114,12 +113,12 @@ class GenericSenderCenter(SenderCenterBase):
         return self.recorder_class(**kwargs)
 
     def records(self, overflow=100, timeout=1):
-        return self.get_records(
-            records=self._get_records_list(),
-            overflow=overflow, timeout=timeout
+        rc = self.get_records(
+            overflow=overflow, underflow=0, timeout=timeout
         )
+        return rc.link_with_records(self._get_records_list())
 
 
 class RoutineSenderCenter(GenericSenderCenter):
-    register_class = Register
+    register_class = SdcRegister
     recorder_class = Recorder
