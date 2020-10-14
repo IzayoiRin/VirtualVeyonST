@@ -1,3 +1,4 @@
+import os
 import re
 import SwitchTracer_ as st
 from universal.exceptions import SettingErrors
@@ -66,6 +67,8 @@ class Activator(object):
         st.VOLUMES.setup(env=self._environ, **kwargs)
         import celery
         st.VOLUMES.REGISTERS["capp"] = celery.app.app_or_default(st.celerys.routine_app)
+        st.VOLUMES.DICT["pid_server"] = os.getpid()
+        st.VOLUMES.DICT["pid_volumes"] = st.VOLUMES._process.pid
 
     def setup_flask_application(self, role):
         flask_app_factor = getattr(st, "flasks").FlaskApplicationFactory(env=self._environ)

@@ -1,16 +1,3 @@
-import SwitchTracer_ as st
-import os
-
-
-def test(gmap, glist, env_key="Demo"):
-    st.DEFAULT_ENVIRON_KEY = env_key
-    st.DEFAULT_SETTINGS_MODULE = os.environ["Demo"]
-    st.setup()
-    # s = gmap.indices(_ctype="pkl")['sdc.move11']
-    # print(gmap.id(), s, id(gmap["capp"]))
-    # s.delay(2)
-
-
 # def test_processing():
 #     sdc = RoutineSenderCenter()
 #     sdc._get_records_list().extend(list(range(21)))

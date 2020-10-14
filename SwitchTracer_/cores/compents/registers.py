@@ -52,3 +52,7 @@ class Register(RegisterBase):
 
 class SdcRegister(Register):
     _ctypes = "refer"
+
+
+class RstRegister(Register):
+    _ctypes = "pkl"

@@ -53,6 +53,15 @@ def re_setup(covered=False, covered_key=None):
     setup()
 
 
-if os.environ.get("CELERY_SETUP"):
+def lazy_setup(env_key):
+    global DEFAULT_ENVIRON_KEY, DEFAULT_SETTINGS_MODULE
+    DEFAULT_ENVIRON_KEY = env_key
+    DEFAULT_SETTINGS_MODULE = os.environ[env_key]
+    setup()
+
+
+if os.environ.get("ST_CELERY_SETUP"):
     print("INFO: setup celery tasks importing environ... ...")
+    setup()
+elif os.environ.get("ST_CURRENT_ENV"):
     setup()

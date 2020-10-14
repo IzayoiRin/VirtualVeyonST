@@ -31,11 +31,6 @@ class IndexRegisters(IndexVolumesBase):
             return self.vol["capp"].tasks.get(key, ret)
 
 
-class IndexRecords(IndexVolumesBase):
-
-    pass
-
-
 class IndexRedisPools(IndexVolumesBase):
 
     class RedisPool:
@@ -65,11 +60,16 @@ class IndexRedisPools(IndexVolumesBase):
         return self.RedisPool(**self.vol[key])
 
 
+class IndexNull(IndexVolumesBase):
+
+    pass
+
+
 class VolumesBase(object):
 
     vinfo = None
     is_instanced = None
-    Indices = None
+    Indices = IndexNull
 
     def __new__(cls, *args, **kwargs):
         if cls.is_instanced is None:
@@ -105,12 +105,15 @@ class RegistersMap(VolumesBase, dict):
 class RecordsList(VolumesBase, list):
 
     vinfo = "GlobalRecordsList"
-    Indices = IndexRecords
 
 
 class RedisPoolsMap(VolumesBase, dict):
     vinfo = "GlobalRedisPoolsMap"
     Indices = IndexRedisPools
+
+
+class STDict(VolumesBase, dict):
+    vinfo = "GlobalDictForST"
 
 
 class VolumesManagerBase(BaseManager):
@@ -165,5 +168,5 @@ class VolumesManagerBase(BaseManager):
 class Volumes(VolumesManagerBase):
 
     __exposed__ = ["__len__", "__getitem__", "__class__", "__iter__", "__setitem__"]
-    __loading__ = [RegistersMap, RecordsList, RedisPoolsMap]
-    __linking__ = [("REGISTERS", None), ("RECORDS", None), ("REDIS", None)]
+    __loading__ = [RegistersMap, RecordsList, RedisPoolsMap, STDict]
+    __linking__ = [("REGISTERS", None), ("RECORDS", None), ("REDIS", None), ("DICT", None)]
