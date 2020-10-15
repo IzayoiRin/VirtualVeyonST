@@ -1,6 +1,7 @@
 import os
 from importlib import import_module
-from SwitchTracer_.universal.exceptions import SettingErrors
+
+from universal.exceptions import SettingErrors
 
 
 class Settings(object):

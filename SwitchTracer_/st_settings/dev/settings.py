@@ -2,11 +2,10 @@ LOG_LEVEL = "DEBUGS"
 
 """ KERNEL WARES"""
 KERNELWARES = {
-    "basements": "universal.basements",
-    "activators": "universal.activator",
-    "volumes": "universal.volumes",
+    "basements": "cores.bases.basements",
     "celerys": "cores.utils.celerys",
     "flasks": "cores.utils.flask_",
+    "activator": "activators.common",
 }
 
 """ Configure for Celery """
@@ -23,6 +22,7 @@ CELERY = {
 """ Configure for Flask """
 FLASK = {
     "name": "SwitchTracer_",
+    "server": "servers.flask_",
     "@master": {
         "DEBUG": False,
         "HOST": "127.0.0.1",

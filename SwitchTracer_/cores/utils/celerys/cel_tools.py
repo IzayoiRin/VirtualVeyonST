@@ -6,7 +6,7 @@ from importlib import import_module
 from celery import Celery
 import SwitchTracer_ as st
 
-from universal.fuc_tools import task_urls_routers
+from universal.tools.functions import task_urls_routers
 from universal.exceptions import SettingErrors
 
 IS_PATH = re.compile(r'[\/\\]')

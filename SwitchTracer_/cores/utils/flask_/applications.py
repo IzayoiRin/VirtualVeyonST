@@ -27,7 +27,7 @@ class FlaskApplicationFactory(object):
             raise SettingErrors("Can not find any ROLEs in settings.FLASK!")
 
     def _get_blue_printer(self):
-        fmod = st.environ(self.environ).settings["KERNELWARES"]["flasks"]
+        fmod = self.settings.get("server") or st.environ(self.environ).settings["KERNELWARES"]["flasks"]
         try:
             self.blue_printers = {
                 i: import_module("{flask}.{bprinter}".format(flask=fmod, bprinter=i)).bp

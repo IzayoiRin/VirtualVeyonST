@@ -1,4 +1,4 @@
-from universal.fuc_tools import task_urls_routers
+from universal.tools.functions import task_urls_routers
 from universal.exceptions import KernelWaresSettingsErrors, RegisterErrors
 
 

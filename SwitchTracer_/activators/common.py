@@ -1,5 +1,7 @@
 import os
 import re
+from multiprocessing import Process
+
 import SwitchTracer_ as st
 from universal.exceptions import SettingErrors
 
@@ -62,7 +64,7 @@ class Activator(object):
         )
 
     def setup_g_volume(self, **kwargs):
-        from universal.volumes import Volumes
+        from servers.volmanager import Volumes
         st.VOLUMES = Volumes()
         st.VOLUMES.setup(env=self._environ, **kwargs)
         import celery
@@ -75,3 +77,12 @@ class Activator(object):
         fapp = flask_app_factor(role)
         flask_app_factor.register_bprinter(fapp, role=role)
         return fapp
+
+    @staticmethod
+    def setup_resoluter_monitor(gdict):
+        from servers.resoluter import runmonitor
+        # st.VOLUMES.RECORDS.extend(list(range(20)))
+        hd = Process(target=runmonitor, args=(st.VOLUMES.REGISTERS, st.VOLUMES.RECORDS, st.VOLUMES.DICT))
+        hd.start()
+        gdict["pid_resoluter"] = hd.pid
+        # hd.join()
