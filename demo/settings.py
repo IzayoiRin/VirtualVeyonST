@@ -25,7 +25,7 @@ FLASK = {
     "server": "servers.flask_",
     "@master": {
         "DEBUG": False,
-        "HOST": "127.0.0.1",
+        "HOST": "172.25.1.1",
         "PORT": 5000
     },
     "@slaver": {
@@ -40,4 +40,4 @@ DEFAULT_TASKS_PREFIX = "task"
 
 """ Resoluter Refer"""
 DEFAULT_MAX_POOL = 3
-DEFAULT_DYNAMIC_POOL_INFO = {"helper0": 10, "helper1": 40}
+DEFAULT_DYNAMIC_POOL_INFO = {"helper0": 40, "helper1": 100}

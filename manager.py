@@ -10,16 +10,17 @@ ROLE = None
 LOADING_SHOCK = 0
 
 
-def commands(run, env=None, settings=None, role="master", shock="0.4"):
+def commands(exec, env=None, settings=None, role="master", shock="0.4"):
     """
     Switch Tracer Server Manager @copyrights IzayoiRin
+    :param exec: execution options [runserver, ...]
     :param env: [uppercase] environ key for running settings
     :param settings: [pymodule_path] module path for running settings
     :param role: [lowercase] identity for running, default "master"
     :param shock: [second] short shock time waiting whole processing on
     """
-    if run != "run":
-        raise SystemExit("use `python manager.py run --params` to start servers")
+    if exec != "runserver":
+        raise SystemExit("use `python manager.py runserver --params` to start servers")
     st.DEFAULT_ENVIRON_KEY = env.upper() if env else DEFAULT_ENVIRON_KEY
     st.DEFAULT_SETTINGS_MODULE = settings or DEFAULT_SETTINGS_MODULE
     global ROLE, LOADING_SHOCK
@@ -70,4 +71,4 @@ if __name__ == '__main__':
                 role=ROLE)
     print(msg)
     # Flask Server start
-    fapp.run()
+    fapp.run(host=fapp.config.get("HOST"), port=fapp.config.get("PORT"))
