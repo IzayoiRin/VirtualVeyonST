@@ -1,11 +1,11 @@
 """ There are code for Resoluter"""
 import time
 from multiprocessing import Process
+from celery.result import AsyncResult
 
 import SwitchTracer_ as st
 from cores.compents.recorders import Recorder
 from cores.compents.registers import Register
-
 from universal.exceptions import SettingErrors, ResoluterErrors, KernelWaresSettingsErrors
 
 _helper_pool = []
@@ -91,13 +91,13 @@ class GenericResoluter(ResoluterBase):
             dequeue = recorder.pop(0, params["blocked"])
             # blocked mod: pop will not underflow cause timeout=0 repr process No Releasing.
             # Non-blocked mod: pop will underflow and return None value repr the process Terminated.
-            if not isinstance(dequeue, int):
+            if not isinstance(dequeue, AsyncResult):
                 if pname == "main":
                     continue
                 else:
                     return
             if not self.polling(dequeue):
-                recorder.push(dequeue+3, False)
+                recorder.push(dequeue, False)
             # print(recorder)
 
     def dynamic_recorder(self, pname, timeout=1):
@@ -107,25 +107,33 @@ class GenericResoluter(ResoluterBase):
         return self.records(underflow=underflow, blocked=is_short_circuit, timeout=timeout)
 
     def polling(self, dequeue):
-        # if dequeue.ready():
-        #     print(dequeue.get())
-        #     # self.get_register().delay(dequeue.get())
-        #     return 1
-        if dequeue % 2 == 0:
+        if dequeue.ready():
+            print(dequeue.get())
+            # self.get_register().delay(dequeue.get())
             return 1
+        # if dequeue % 2 == 0:
+        #     return 1
         return 0
 
     def async_helper(self, monitors, timeout=0.1):
         global _helper_pool
         for idx, hd in enumerate(_helper_pool):
             if hd is None:
-                _helper_pool[idx] = Process(
-                    target=self._listen,
-                    args=("helper%d" % idx, self._get_records_list())
-                )
+                # _helper_pool[idx] = Process(
+                #     target=self._listen,
+                #     args=("helper%d" % idx, self._get_records_list())
+                # )
                 if len(self._get_records_list()) > monitors[idx]:
+                    _helper_pool[idx] = Process(
+                        target=self._listen,
+                        args=("helper%d" % idx, self._get_records_list())
+                    )
+                    # TODO: INFO MSG HELPER START
+                    print("helper%d started" % idx)
                     _helper_pool[idx].start()
             elif hd.is_alive() is False:
+                # TODO: INFO MSG HELPER END
+                print("helper%d ended" % idx)
                 _helper_pool[idx] = None
         if timeout > 0 and all(_helper_pool):
             time.sleep(timeout)
