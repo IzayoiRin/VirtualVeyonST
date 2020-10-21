@@ -2,7 +2,15 @@ class UniErrors(Exception):
     pass
 
 
+class SetupErrors(UniErrors):
+    pass
+
+
 class SettingErrors(UniErrors):
+    pass
+
+
+class ImportedErrors(UniErrors):
     pass
 
 

@@ -1,7 +1,8 @@
-from importlib import import_module
-import SwitchTracer_ as st
-from universal.exceptions import SettingErrors
 from flask import Flask
+
+import SwitchTracer_ as st
+from universal.tools.functions import import_from_path
+from universal.exceptions import SettingErrors
 
 
 class FlaskApplicationFactory(object):
@@ -27,10 +28,11 @@ class FlaskApplicationFactory(object):
             raise SettingErrors("Can not find any ROLEs in settings.FLASK!")
 
     def _get_blue_printer(self):
-        fmod = self.settings.get("server") or st.environ(self.environ).settings["KERNELWARES"]["flasks"]
+        fmod = self.settings.get("server") or \
+               st.environ(self.environ).settings["SERVERS"]["flask"]
         try:
             self.blue_printers = {
-                i: import_module("{flask}.{bprinter}".format(flask=fmod, bprinter=i)).bp
+                i: import_from_path("{flask}.{bprinter}".format(flask=fmod, bprinter=i)).bp
                 for i in self.roles
             }
         except Exception as e:

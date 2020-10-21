@@ -1,11 +1,18 @@
 """ Here are code for Activator manger """
 import os
+import sys
 import time
 import fire
+
+# <editor-fold desc="Insert custom Framework root path to sys.path">
+FRAMEWORK_ROOT = os.path.join(os.path.dirname(__file__), "SwitchTracer_")
+if FRAMEWORK_ROOT not in sys.path:
+    sys.path.insert(0, FRAMEWORK_ROOT)
+# </editor-fold>
 import SwitchTracer_ as st
 
 DEFAULT_ENVIRON_KEY = "SwitchTracer_"
-DEFAULT_SETTINGS_MODULE = "st_settings.dev.settings"
+DEFAULT_SETTINGS_MODULE = "_settings.settings"
 ROLE = None
 LOADING_SHOCK = 0
 
@@ -41,7 +48,7 @@ if __name__ == '__main__':
     # <editor-fold desc="Start your custom Activator">
     """ Here Start your custom Activator """
     # construct activators for prj.SwitchTracer on current environment
-    activator = getattr(st, "activator").Activator(cur_env.name)
+    activator = getattr(st, "activator")(cur_env.name)
     # setup global volume, include REGISTERS, RECORDS, REDIS, DICT
     activator.setup_g_volume()
     # test redis connection used in Celery broker or backend

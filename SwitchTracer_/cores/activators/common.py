@@ -3,7 +3,8 @@ import re
 from multiprocessing import Process
 
 import SwitchTracer_ as st
-from universal.exceptions import SettingErrors
+from SwitchTracer_ import import_from_path
+from universal.exceptions import SettingErrors, ImportedErrors, SetupErrors
 
 
 class Activator(object):
@@ -42,6 +43,15 @@ class Activator(object):
         self.broker_url = self.resolute_redis_url(broker)
         self.backend_url = self.resolute_redis_url(backend)
 
+    def server_loc(self, key: str):
+        try:
+            ret = import_from_path(self.settings["SERVERS"][key])
+        except IndexError as e:
+            raise SettingErrors(e)
+        except ImportedErrors as e:
+            raise SetupErrors(e)
+        return ret
+
     def test_celery_redis_net_link(self, gredis):
         br, ba = self.broker_url, self.backend_url
         self.connect_redis(
@@ -64,25 +74,26 @@ class Activator(object):
         )
 
     def setup_g_volume(self, **kwargs):
-        from servers.volmanager import Volumes
+        Volumes = self.server_loc("volmanager")
         st.VOLUMES = Volumes()
         st.VOLUMES.setup(env=self._environ, **kwargs)
         import celery
-        st.VOLUMES.REGISTERS["capp"] = celery.app.app_or_default(st.celerys.routine_app)
+        st.VOLUMES.REGISTERS["capp"] = celery.app.app_or_default(st.celery.routine_app)
         st.VOLUMES.DICT["pid_server"] = os.getpid()
         st.VOLUMES.DICT["pid_volumes"] = st.VOLUMES._process.pid
 
     def setup_flask_application(self, role):
-        flask_app_factor = getattr(st, "flasks").FlaskApplicationFactory(env=self._environ)
+        flask_app_factor = st.flask.FlaskApplicationFactory(env=self._environ)
         fapp = flask_app_factor(role)
         flask_app_factor.register_bprinter(fapp, role=role)
         return fapp
 
-    @staticmethod
-    def setup_resoluter_monitor(gdict):
-        from servers.resoluter import runmonitor
-        # st.VOLUMES.RECORDS.extend(list(range(20)))
-        hd = Process(target=runmonitor, args=(st.VOLUMES.REGISTERS, st.VOLUMES.RECORDS, st.VOLUMES.DICT))
+    def setup_resoluter_monitor(self, gdict):
+        runmonitor = self.server_loc("resoluter")
+        hd = Process(
+            target=runmonitor,
+            args=(st.VOLUMES.REGISTERS, st.VOLUMES.RECORDS, st.VOLUMES.DICT),
+            kwargs={"env": self._environ}
+        )
         hd.start()
         gdict["pid_resoluter"] = hd.pid
-        # hd.join()

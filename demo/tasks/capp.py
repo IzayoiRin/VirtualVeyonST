@@ -1,3 +1,3 @@
 import SwitchTracer_ as st
 
-app = st.celerys.routine_app
+app = st.celery.routine_app

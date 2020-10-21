@@ -12,22 +12,23 @@ _helper_pool = []
 
 
 class ResoluterBase(object):
-
     default_global_registers_map = None
     default_global_records_list = None
 
     __dynamic_pool__ = None
     __environ__ = None
+    __max_pool__ = None
 
-    def __init__(self):
+    def __init__(self, env):
         if self.default_global_registers_map is None or self.default_global_records_list is None:
             raise KernelWaresSettingsErrors("No VOLUMES has been Linked!")
         setattr(self, "__REGISTERS", self.default_global_registers_map)
         setattr(self, "__RECORDS", self.default_global_records_list)
-        self.__dynamic_pool__ = self.__dynamic_pool__ or \
-                               st.environ(self.__environ__).settings.get("DEFAULT_DYNAMIC_POOL_INFO")
+        settings = st.environ(env or self.__environ__).settings
+        self.__dynamic_pool__ = self.__dynamic_pool__ or settings.get("DEFAULT_DYNAMIC_POOL_INFO")
         if not isinstance(self.__dynamic_pool__, dict):
             raise SettingErrors("Can Not found dynamic pool info of multiprocessing in settings.RESOLUTER")
+        self.max_pool = self.__max_pool__ or settings.get("DEFAULT_MAX_POOL")
 
     def _get_records_list(self):
         return getattr(self, "__RECORDS")
@@ -48,16 +49,13 @@ class ResoluterBase(object):
 
 
 class GenericResoluter(ResoluterBase):
-
     recorder_class = None
     register_class = None
-    _environ = None
-    max_pool = 3
     async_helper_prefix = "helper"
 
-    def __init__(self):
+    def __init__(self, env=None):
         self.kwargs = dict()
-        super(GenericResoluter, self).__init__()
+        super(GenericResoluter, self).__init__(env=env)
 
     def get_register_class(self):
         return self.register_class.link2gvol(self._get_registers_map())
@@ -169,6 +167,5 @@ class GenericResoluter(ResoluterBase):
 
 
 class UniResoluter(GenericResoluter):
-
     recorder_class = Recorder
     register_class = Register

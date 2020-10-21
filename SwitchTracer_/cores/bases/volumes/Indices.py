@@ -27,7 +27,7 @@ class IndexRegisters(IndexVolumesBase):
             assert self.vol.get("capp") or hasattr(self.vol["capp"], "conf"), \
                 VolumeErrors("Indexing from Reference must be linked to a legal Celery.application")
             if self.vol["capp"].conf.broker_url is None:
-                from cores.utils.celerys import set_celery_from_conf
+                from cores.contrib.celerymiddlewares import set_celery_from_conf
                 set_celery_from_conf(self.vol["capp"], env=self.vol.environ)
             return self.vol["capp"].tasks.get(key, ret)
 

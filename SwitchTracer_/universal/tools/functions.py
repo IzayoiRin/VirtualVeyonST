@@ -5,7 +5,7 @@ from importlib import import_module
 import redis
 
 import SwitchTracer_ as st
-from universal.exceptions import SettingErrors, ConnectionErrors
+from universal.exceptions import SettingErrors, ConnectionErrors, ImportedErrors
 
 PATTERN = re.compile(r"^(?P<prefix>[0-9a-zA-Z_.]+)(\<(?P<mprefix>[^<^>]+)\>)?(\@(?P<fprefix>[0-9a-zA-Z_]+))?$")
 
@@ -51,3 +51,32 @@ def connect_redis_pool(**kwargs):
     except (redis.exceptions.ConnectionError, redis.exceptions.TimeoutError) as e:
         raise ConnectionErrors(e)
     return rds
+
+
+def import_(mod: str, tar):
+    try:
+        ret = import_module(mod)
+    except ModuleNotFoundError:
+        if tar is None:
+            try:
+                mod, tar = mod.rsplit('.', 1)
+            except ValueError:
+                raise ImportedErrors("<%s> is NOT existed!" % mod)
+            return import_(mod, tar)
+        else:
+            raise ImportedErrors("<%s> is NOT existed!" % mod)
+    else:
+        ret = getattr(ret, tar, None) if tar else ret
+        if ret is None:
+            raise ImportedErrors("<%s> does NOT include <%s>" % (mod, tar))
+        return ret
+
+
+def import_from_path(mod: str, raise_=True, return_=None):
+    try:
+        lib = import_(mod, None)
+    except ImportedErrors as e:
+        if raise_:
+            raise ImportedErrors(e)
+        return return_
+    return lib

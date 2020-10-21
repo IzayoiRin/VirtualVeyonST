@@ -1,20 +1,30 @@
 import os
 import sys
-from importlib import import_module
+
+from universal.tools.functions import import_from_path
+from universal.exceptions import SetupErrors
+
 
 ROOT_DIR = os.path.dirname(__file__)
 DEFAULT_ENVIRON_KEY = os.path.split(ROOT_DIR)[-1]
-DEFAULT_SETTINGS_MODULE = "st_settings.dev.settings"
+DEFAULT_SETTINGS_MODULE = "_settings.settings"
 VOLUMES = None
-
-
-class SetupError(Exception):
-    pass
+__ENGINES__ = "KERNEL_ENGINES"
+__basements__ = "basements"
 
 
 def environ(env_key=None):
-    settings = import_module(os.environ.get(env_key or DEFAULT_ENVIRON_KEY))
-    return getattr(import_module(settings.KERNELWARES["basements"]), "Environ")(env_key or DEFAULT_ENVIRON_KEY)
+    engines = import_from_path(
+        "%s.%s" % (os.environ.get(env_key or DEFAULT_ENVIRON_KEY), __ENGINES__), raise_=False
+    )
+    if engines is None:
+        raise SetupErrors("Could Not find Any Engines in settings.%s" % __ENGINES__)
+    Environ = import_from_path(
+        "%s.%s" % (engines[__basements__], "Environ"), raise_=False
+    )
+    if Environ is None:
+        raise SetupErrors("Could Not load Any Environ from settings.%s.%s" % (__ENGINES__, __basements__))
+    return Environ(env_key or DEFAULT_ENVIRON_KEY)
 
 
 def setup():
@@ -29,10 +39,10 @@ def setup():
     getattr(this, "_settings",
             setattr(this, "_settings", getattr(this, "_environ").settings)
             )
-    kernels = getattr(this, "_settings").get("KERNELWARES")
+    kernels = getattr(this, "_settings").get(__ENGINES__)
     for k, v in kernels.items():
         getattr(this, k,
-                setattr(this, k, import_module(v))
+                setattr(this, k, import_from_path(v))
                 )
 
 
@@ -66,4 +76,4 @@ if os.environ.get("ST_CELERY_SETUP"):
     DEFAULT_SETTINGS_MODULE = os.environ["ST_CELERY_SETUP"]
     setup()
 elif os.environ.get("ST_CURRENT_ENV"):
-    setup()
+    lazy_setup(os.environ.get("ST_CURRENT_ENV"))

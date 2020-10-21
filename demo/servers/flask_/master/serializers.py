@@ -1,4 +1,4 @@
-from cores.utils.flask_ import serializer
+from cores.contrib.flaskmiddlewares import serializer
 
 
 class SdcSerializer(serializer.Serializer):
