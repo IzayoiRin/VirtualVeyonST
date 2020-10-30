@@ -1,3 +1,4 @@
-from flask import Blueprint
+from . import receptorView
+from . import courierVeiw
 
-bp = Blueprint("slaver", __name__, url_prefix="slaver")
+bluePrinters = [receptorView.bp, courierVeiw.bp]

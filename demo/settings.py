@@ -52,3 +52,9 @@ FLASK = {
     #
     # }
 }
+
+COURIER = {
+    "master": "GET@http://localhost:5000/master/udpacks/{pid}/{bid}",
+    "seeds": "PUT@http://localhost:5000/master/seed",
+    "redis": "",
+}

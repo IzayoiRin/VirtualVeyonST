@@ -51,9 +51,9 @@ if __name__ == '__main__':
     activator = getattr(st, "activator")(cur_env.name)
     # setup global volume, include REGISTERS, RECORDS, REDIS, DICT
     activator.setup_g_volume()
-    # test redis connection used in Celery broker or backend
+    # download_ redis connection used in Celery broker or backend
     activator.test_celery_redis_net_link(st.VOLUMES.REDIS)
-    # setup and test connection for Routine redis
+    # setup and download_ connection for Routine redis
     activator.setup_g_redis_pool(st.VOLUMES.REDIS)
     # setup Flask application on current environment
     fapp = activator.setup_flask_application(ROLE)

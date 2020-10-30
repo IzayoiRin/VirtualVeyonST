@@ -1,6 +1,7 @@
 import re
 import os
 import pickle
+import base64
 from importlib import import_module
 import redis
 
@@ -80,3 +81,27 @@ def import_from_path(mod: str, raise_=True, return_=None):
             raise ImportedErrors(e)
         return return_
     return lib
+
+
+def base64_switcher(mode, encoding="utf-8", return_type=None):
+    """
+    Base64 switcher with decoder and encoder.
+    Example:
+        s = base64_switcher("encode", return_type="utf-8")("Base64 coding")
+        print(s)
+        s = base64_switcher("decode", return_type="utf-8")(s)
+        print(s)
+    :param mode: options["encode", "decode"]
+    :param encoding: string data encoding mode
+    :param return_type: return data type, default None repr Bytes, option[None, encoding mode]
+    """
+    mapping = {"encode": "b64encode", "decode": "b64decode"}
+    opt = mapping[mode]
+
+    def base64_(data):
+        if not isinstance(data, bytes):
+            data = data.encode(encoding)
+        ret = getattr(base64, opt)(data)
+        return ret if return_type is None else ret.decode(return_type)
+
+    return base64_

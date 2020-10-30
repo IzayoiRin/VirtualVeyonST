@@ -10,6 +10,14 @@ class SettingErrors(UniErrors):
     pass
 
 
+class ConfigureSyntaxErrors(UniErrors):
+    pass
+
+
+class NoLocationErrors(UniErrors):
+    pass
+
+
 class ImportedErrors(UniErrors):
     pass
 
@@ -43,4 +51,12 @@ class SerializerSettingErrors(UniErrors):
 
 
 class SerializerValidationErrors(UniErrors):
+    pass
+
+
+class ParserSettingErrors(UniErrors):
+    pass
+
+
+class ContentTypeErrors(UniErrors):
     pass

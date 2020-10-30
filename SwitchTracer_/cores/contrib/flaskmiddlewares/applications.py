@@ -32,7 +32,7 @@ class FlaskApplicationFactory(object):
                st.environ(self.environ).settings["SERVERS"]["flask"]
         try:
             self.blue_printers = {
-                i: import_from_path("{flask}.{bprinter}".format(flask=fmod, bprinter=i)).bp
+                i: import_from_path("{flask}.{bprinter}".format(flask=fmod, bprinter=i)).bluePrinters
                 for i in self.roles
             }
         except Exception as e:
@@ -41,7 +41,8 @@ class FlaskApplicationFactory(object):
     def register_bprinter(self, app, role):
         if role not in self.roles:
             raise SettingErrors("Can not find ROLE<%s> in settings.FLASK!" % role)
-        app.register_blueprint(self.blue_printers[role])
+        for bp in self.blue_printers[role]:
+            app.register_blueprint(bp)
 
     def __call__(self, role):
         if role not in self.roles:

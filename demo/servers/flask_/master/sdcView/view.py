@@ -1,8 +1,10 @@
 from flask import request
 
-from universal.exceptions import SerializerValidationErrors
-from . import bp, SdcFactory, recorder
-from .serializers import SdcSerializer
+from SwitchTracer_.universal.exceptions import SerializerValidationErrors
+
+from demo.servers.flask_.master.sdcView import bp
+from demo.servers.flask_.master.sdcView.sdc import SdcFactory, sdcRecorder
+from demo.servers.flask_.master.serializers import SdcSerializer
 
 
 # TODO: requesting frequency limitations
@@ -12,7 +14,7 @@ def sdc(tasks):
     s = SdcFactory.set_register(reg)
     try:
         query_data = SdcSerializer(request.args).serialize()
-        recorder.push(s.spawn(**query_data))
+        sdcRecorder.push(s.spawn(**query_data))
     except (TypeError, SerializerValidationErrors) as e:
         # TODO: URL FOR Params INNER EXCEPTION BACKENDS
         return "wrong params: %s" % e, 400
