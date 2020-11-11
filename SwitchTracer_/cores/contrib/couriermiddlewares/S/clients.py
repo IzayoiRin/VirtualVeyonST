@@ -3,12 +3,13 @@ import pickle
 import re
 import hashlib
 import time
-from concurrent.futures.thread import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from cores.contrib.couriermiddlewares import status
 from cores.contrib.couriermiddlewares.componets.confs import vacancy_uniconf
 from cores.contrib.couriermiddlewares.utills import MESSAGE_QUEUE, TASK_QUEUE
-from universal.exceptions import NoLocationErrors, ConfigureSyntaxErrors
+from universal.tools.functions import base64_switcher
+from universal.exceptions import NoLocationErrors, ConfigureSyntaxErrors, IllegalParametersErrors, UniErrors
 
 BLOCKS = []
 T = 0
@@ -58,7 +59,7 @@ class CourierManagerBase(object):
         self.seeds = []
         MESSAGE_QUEUE.queue("! Indexing Seed from Redis")
 
-    def check_md5(self, context, md5):
+    def check_md5(self, context: bytes, md5: str) -> int:
         return status.SUCCEEDED if hashlib.md5(context).hexdigest() == md5 else status.DESTROYED
 
 
@@ -67,9 +68,13 @@ class GenericCourierManager(CourierManagerBase):
     downloader_class = None
     cache_class = None
     abstract_master = None
+    pool_exception_callback = None
     NULL = b'\x00'
 
-    __remove__ = ["cache", "conf"]
+    __remove__ = ["cache", ]
+    __parsers__ = {
+        "base64": base64_switcher
+    }
 
     __verbose__ = {
         status.SUCCEEDED: "\033[0;41m \033[0m",
@@ -93,6 +98,9 @@ class GenericCourierManager(CourierManagerBase):
 
     def get_abstract_master(self):
         return self.abstract_master
+
+    def get_callback(self):
+        return self.pool_exception_callback()
 
     def download_initiation(self, mod=None, encoding=None):
 
@@ -119,10 +127,10 @@ class GenericCourierManager(CourierManagerBase):
         global BLOCKS, T
         # get download memory cache
         blocks_flags_bits = self.download_memory.cache
-        BLOCKS = ["%03d" % i for i, s in enumerate(blocks_flags_bits) if s == status.PREPARED]
+        BLOCKS = [str(i) for i, s in enumerate(blocks_flags_bits) if s == status.PREPARED]
         T = time.time()
 
-    def request(self, block):
+    def request(self, block: int):
         # nonlocal master downloader shared among all threads
         status_, msg = self.master.connect(block)
         if status_ == status.SUCCEEDED:
@@ -134,10 +142,10 @@ class GenericCourierManager(CourierManagerBase):
                 return status_, msg
         return status.PREPARED, "Sever Busy Now"
 
-    def run(self, block):
+    def run(self, block: str):
         retries = self.conf.max_retries
         while retries:
-            flag, msg = self.request(block)
+            flag, msg = self.request(int(block))
             if flag == status.SUCCEEDED:
                 msg = "$ %s at %.6f seconds" % (msg, time.time() - T)
                 MESSAGE_QUEUE.queue(msg)
@@ -156,7 +164,15 @@ class GenericCourierManager(CourierManagerBase):
             print("File<%s> starts at %s" % (self.conf.filename, time.ctime()))
             self._write(buffer=f, verbose=verbose)
 
-    def _write(self, buffer, verbose):
+    def task_parser(self, block: int, data: dict) -> (int, bytes, str):
+        try:
+            coder = self.__parsers__[data["encoding"]]
+            content, md5 = coder("decode")(data["content"]), data["md5"]
+        except KeyError as e:
+            raise IllegalParametersErrors("Parameters: %s" % e)
+        return block, content, md5
+
+    def _write(self, buffer, verbose: bool):
         start = time.time()
         _start_ = start
         checked = self.conf.total_blocks - sum(self.download_memory.cache)
@@ -166,16 +182,16 @@ class GenericCourierManager(CourierManagerBase):
             if task is None:
                 time.sleep(0.5)
                 continue
-            block, (context, md5) = task
+            block, context, md5 = self.task_parser(*task)
             status_ = self.check_md5(context, md5)
             if status_ > status.SUCCEEDED:
-                BLOCKS.append(block)
+                BLOCKS.append(str(block))
                 MESSAGE_QUEUE.queue("? Check ErrorCode(%d): block<%s>" % (status_, block))
                 continue
             # write down
-            self.write2file(int(block), context, buffer, verbose=verbose, startime=start)
+            self.write2file(block, context, buffer, verbose=verbose, startime=start)
             MESSAGE_QUEUE.queue("+ Write blocks<%s> Succeeded" % block)
-            seeds.append(block)
+            seeds.append(str(block))
             if len(seeds) and (
                     len(seeds) > self.conf.upload_frequency[0] or time.time() - _start_ > self.conf.upload_frequency[1]
             ):
@@ -186,7 +202,7 @@ class GenericCourierManager(CourierManagerBase):
             checked += 1
         GDICT["checked"] = status.SUCCEEDED
 
-    def write2file(self, idx, context, buffer, verbose=True, startime=None):
+    def write2file(self, idx: int, context: bytes, buffer, verbose=True, startime=None):
         # write receive context to buffer
         buffer.seek(idx * self.conf.storage_per_blocks, 0)
         buffer.write(context)
@@ -274,8 +290,9 @@ class GenericCourierManager(CourierManagerBase):
         print("Loading ... ...")
         self.loading_blocks()
         # Initial Master Downloader targeting to Master server
-        MASTER = self.get_abstract_master()
-        self.master = self.get_downloader(MASTER)
+        master = self.get_abstract_master()
+        self.master = self.get_downloader(master)
+        self.master.set_source(self.conf.fileid)
 
         print("Indexing seeds ... ...")
         # Index Seeds Downloader
@@ -285,18 +302,18 @@ class GenericCourierManager(CourierManagerBase):
         blocks = BLOCKS
         reindex_counts = 0
         max_workers = (max_workers or self.conf.max_workers) + 1
-
         if not blocks:
             print("Checking ... ...")
             self.final()
             return
-
+        # print(blocks)
         # return
         print("Downloading ... ...")
 
         with ThreadPoolExecutor(max_workers=max_workers) as pool:
             # write threads
             write = pool.submit(self.write, verbose)
+            write.add_done_callback(self.get_callback()["writer"])
 
             # read threads
             while len(blocks) or GDICT["checked"] > status.SUCCEEDED:
@@ -306,8 +323,15 @@ class GenericCourierManager(CourierManagerBase):
                     continue
                 if len(temp) < max_workers and len(blocks):
                     continue
+
                 MESSAGE_QUEUE.queue("+ Prepared blocks[%s]" % ",".join(temp))
-                response = pool.map(self.run, temp)
+                read_handlers = []
+                read_callback = self.get_callback()["reader"]
+                for block in temp:
+                    read = pool.submit(self.run, block)
+                    read.add_done_callback(read_callback)
+                    read_handlers.append(read)
+                response = map(lambda x: x.result(), as_completed(read_handlers))
                 for status_, block in response:
                     if status_ > status.SUCCEEDED:
                         MESSAGE_QUEUE.queue("- Download ErrorCode(%d): block<%s>" % (status_, block))
@@ -324,4 +348,48 @@ class GenericCourierManager(CourierManagerBase):
         print("Done !")
 
 
-__all__ = ["GenericCourierManager", ]
+class CourierLauncher(object):
+
+    client_class = None
+
+    def __init__(self, fname: str, path: str, configure: bytes):
+        self.fname = fname
+        self.path = path
+        self.configure = configure
+
+    def get_client_class(self):
+        return self.client_class
+
+    def get_client(self):
+        return self.client_class(self.fname, download_path=self.path)
+
+    def set_path(self):
+        if os.path.exists(self.path):
+            # TODO: LOG WARNING
+            print("Overwriting Existed Directory!: %s" % self.path)
+            return
+        try:
+            os.makedirs(self.path)
+        except Exception as e:
+            raise NoLocationErrors(e)
+
+    def initial_configure_file(self):
+        with open(os.path.join(self.path, self.fname), "wb") as f:
+            f.write(self.configure)
+
+    def response(self, msg):
+        return str(msg)
+
+    def __call__(self, **pclient):
+        msg = None
+        try:
+            self.set_path()
+            self.initial_configure_file()
+            self.get_client()(**pclient)
+        except UniErrors as e:
+            msg = e
+        finally:
+            return self.response(msg)
+
+
+__all__ = ["GenericCourierManager", "CourierLauncher"]

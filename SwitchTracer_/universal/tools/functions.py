@@ -6,7 +6,7 @@ from importlib import import_module
 import redis
 
 import SwitchTracer_ as st
-from universal.exceptions import SettingErrors, ConnectionErrors, ImportedErrors
+from universal.exceptions import SettingErrors, ConnectionErrors, ImportedErrors, CodingErrors
 
 PATTERN = re.compile(r"^(?P<prefix>[0-9a-zA-Z_.]+)(\<(?P<mprefix>[^<^>]+)\>)?(\@(?P<fprefix>[0-9a-zA-Z_]+))?$")
 
@@ -101,7 +101,10 @@ def base64_switcher(mode, encoding="utf-8", return_type=None):
     def base64_(data):
         if not isinstance(data, bytes):
             data = data.encode(encoding)
-        ret = getattr(base64, opt)(data)
-        return ret if return_type is None else ret.decode(return_type)
+        try:
+            ret = getattr(base64, opt)(data)
+            return ret if return_type is None else ret.decode(return_type)
+        except Exception as e:
+            raise CodingErrors(e)
 
     return base64_

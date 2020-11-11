@@ -10,6 +10,8 @@ TIMEOUT = 2
 REFUSED = 3
 # pack is destroyed
 DESTROYED = 4
+# unknown error with pack
+UNKNOWN = 9
 
 # info-level
 INFO = 100

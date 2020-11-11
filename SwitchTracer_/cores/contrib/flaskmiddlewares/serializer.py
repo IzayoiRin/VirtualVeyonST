@@ -2,6 +2,18 @@ import re
 from universal.exceptions import SerializerValidationErrors, SerializerSettingErrors
 
 
+class InvalidInfo(object):
+
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
+    def __repr__(self):
+        return "InvalidInfo: %s" % self.msg
+
+
 class FieldsType(object):
 
     _type = None
@@ -12,13 +24,31 @@ class FieldsType(object):
     def check(self, val):
         try:
             v = self._type(val)
-        except ValueError:
-            return None
+        except ValueError as e:
+            return InvalidInfo(e)
         return v
 
 
 class Integer(FieldsType):
     _type = int
+
+
+class String(FieldsType):
+    _type = str
+
+    def __init__(self, encoding=None, required=True):
+        self.encoding = encoding
+        super(String, self).__init__(required)
+
+    def check(self, val):
+        val = super(String, self).check(val)
+        if isinstance(val, InvalidInfo) or not callable(self.encoding):
+            return val
+        try:
+            val = self.encoding(val)
+        except Exception as e:
+            return InvalidInfo(e)
+        return val
 
 
 class SerializerBase(object):
@@ -70,7 +100,7 @@ class Serializer(SerializerBase):
             validator = self.validators.get(k)
             assert validator is not None, "Could not find legal validator for Fields<%s>" % k
             v = validator.check(v)
-            assert v is not None, "Invalidated Value for Fields<%s>" % k
+            assert not isinstance(v, InvalidInfo), "Invalidated Value for Fields<%s>, %s" % (k, v)
             self._data[k] = v
         self._validated = True
 

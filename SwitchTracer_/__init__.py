@@ -58,7 +58,7 @@ def re_setup(covered=False, covered_key=None):
             # TODO: RAISE WARNING MSG
             print("warning: covered the original key: %s " % covered_key)
         except KeyError as e:
-            raise SetupError("Can not find and cover the original key: %s" % e)
+            raise SetupErrors("Can not find and cover the original key: %s" % e)
     os.environ[DEFAULT_ENVIRON_KEY] = DEFAULT_SETTINGS_MODULE
     setup()
 

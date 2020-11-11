@@ -4,7 +4,7 @@ from SwitchTracer_.universal.exceptions import SerializerValidationErrors
 
 from demo.servers.flask_.master.sdcView import bp
 from demo.servers.flask_.master.sdcView.sdc import SdcFactory, sdcRecorder
-from demo.servers.flask_.master.serializers import SdcSerializer
+from demo.servers.flask_.serializers import SdcSerializer
 
 
 # TODO: requesting frequency limitations

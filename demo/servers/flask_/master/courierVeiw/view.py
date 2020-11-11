@@ -5,7 +5,7 @@ from SwitchTracer_.universal.exceptions import NoLocationErrors
 
 from demo.servers.flask_.master.courierVeiw import bp
 from demo.servers.flask_.master.courierVeiw.courier import StCourierMasterServer
-from demo.servers.flask_.master.serializers import UpdatesSerializer
+from demo.servers.flask_.serializers import UpdatesSerializer
 
 
 @bp.route("/updates/<int:pid>/<int:bid>", methods=["GET"])
@@ -22,7 +22,7 @@ def updates(pid, bid):
     return response
 
 
-@bp.route("/updates/temps", method=["DEL"])
+@bp.route("/updates/temps", methods=["DEL"])
 def clear():
     StCourierMasterServer().clear()
     return "ok", 200

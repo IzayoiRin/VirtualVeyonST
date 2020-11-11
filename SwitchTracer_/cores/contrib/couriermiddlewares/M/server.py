@@ -1,7 +1,6 @@
 import os
 import hashlib
 import re
-import time
 
 import numpy as np
 from flask import g
@@ -12,10 +11,10 @@ from universal.exceptions import NoLocationErrors
 from universal.tools.functions import base64_switcher
 
 TEMP_PACK_JSON = {
-    "100": r"C:\izayoi\prj_veyon\SwitchTracer\SwitchTracer_\cores\contrib\couriermiddlewares\tests\Test_LiSao_context.txt"
+    "100": r"C:\izayoi\prj_veyon\SwitchTracer\SwitchTracer_\cores\contrib\couriermiddlewares\tests\upload_.txt"
 }
-
-CONNECTIONS = AtomicVolume(vol=[0, 0])
+# counts, version
+CONNECTIONS = AtomicVolume(vol=[1, 0])
 
 
 class CourierMasterServer(object):
@@ -29,7 +28,6 @@ class CourierMasterServer(object):
         CONNECTIONS.reset()
 
     def read(self, pid: int, bid: int):
-        time.sleep(1)
         # get pack location through pid
         pack = TEMP_PACK_JSON.get(str(pid))
         if pack is None or os.path.exists(pack) is False:
@@ -48,13 +46,13 @@ class CourierMasterServer(object):
                 "encoding": "base64",
             }
 
-    def upload_seed(self, *seeds):
+    def upload_seeds(self, *seeds):
         """
         :param seeds: [{"pid": seed_pid<int>, "bid": seed_bin<int>}, ... ,]
         """
         # TODO: Real processor for seed updating
         processed = ["seeds<%d-%d>" % (seed["pid"], seed["bid"]) for seed in seeds]
-        return "Save to redis: %s" % ",".join(processed)
+        return status.SUCCEEDED, "Save to redis: %s" % ",".join(processed)
 
     def is_monitored(self, request):
         for key, url_patter in self.MONITOR_ULRS.items():

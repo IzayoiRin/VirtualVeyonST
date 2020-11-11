@@ -48,13 +48,15 @@ FLASK = {
         "HOST": "172.25.1.1",
         "PORT": 5000
     },
-    # "@slaver": {
-    #
-    # }
+    "@slaver": {
+        "DEBUG": False,
+        "HOST": "172.25.1.1",
+        "PORT": 5005
+    }
 }
 
 COURIER = {
-    "master": "GET@http://localhost:5000/master/udpacks/{pid}/{bid}",
-    "seeds": "PUT@http://localhost:5000/master/seed",
+    "master": "GET@http://172.25.1.1:5000/master/updates/{pid}/{bid}",
+    "seeds": "PUT@http://172.25.1.1:5000/master/updates/seeds",
     "redis": "",
 }

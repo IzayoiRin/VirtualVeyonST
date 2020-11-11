@@ -40,4 +40,4 @@
 #
 # """ Resoluter Refer"""
 # DEFAULT_MAX_POOL = 3
-# DEFAULT_DYNAMIC_POOL_INFO = {"helper0": 10, "helper1": 40}
+# DEFAULT_DYNAMIC_POOL_INFO = {"helper0": 64, "helper1": 256}

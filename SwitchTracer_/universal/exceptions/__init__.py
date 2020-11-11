@@ -60,3 +60,11 @@ class ParserSettingErrors(UniErrors):
 
 class ContentTypeErrors(UniErrors):
     pass
+
+
+class IllegalParametersErrors(UniErrors):
+    pass
+
+
+class CodingErrors(UniErrors):
+    pass
