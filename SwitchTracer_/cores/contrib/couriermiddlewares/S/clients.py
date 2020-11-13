@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from cores.contrib.couriermiddlewares import status
 from cores.contrib.couriermiddlewares.componets.confs import vacancy_uniconf
-from cores.contrib.couriermiddlewares.utills import MESSAGE_QUEUE, TASK_QUEUE
+from cores.contrib.couriermiddlewares.utills import MESSAGE_QUEUE, TASK_QUEUE, bytes_unit_switch
 from universal.tools.functions import base64_switcher
 from universal.exceptions import NoLocationErrors, ConfigureSyntaxErrors, IllegalParametersErrors, UniErrors
 
@@ -71,7 +71,7 @@ class GenericCourierManager(CourierManagerBase):
     pool_exception_callback = None
     NULL = b'\x00'
 
-    __remove__ = ["cache", ]
+    __remove__ = ["cache", "conf"]
     __parsers__ = {
         "base64": base64_switcher
     }
@@ -219,14 +219,7 @@ class GenericCourierManager(CourierManagerBase):
             if startime is not None:
                 speed = (self.conf.total_blocks - sum(blocks_flags_bits)) / (time.time() - startime)
                 last = round(sum(blocks_flags_bits) / speed, 2)
-                if speed < 1024:
-                    unit = ""
-                elif speed > 1024:
-                    speed /= 1024
-                    unit = "K"
-                else:
-                    speed /= 1024
-                    unit = "M"
+                speed, unit = bytes_unit_switch(speed * self.conf.storage_per_blocks)
                 times = "-avg.speed: {s} {u}Bytes/s -approximate.last: {l} s".format(
                     s=round(speed, 2), u=unit, l=last
                 )

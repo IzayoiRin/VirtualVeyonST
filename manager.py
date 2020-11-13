@@ -9,12 +9,12 @@ FRAMEWORK_ROOT = os.path.join(os.path.dirname(__file__), "SwitchTracer_")
 if FRAMEWORK_ROOT not in sys.path:
     sys.path.insert(0, FRAMEWORK_ROOT)
 # </editor-fold>
-import SwitchTracer_ as st
-
+st = None
 DEFAULT_ENVIRON_KEY = "SwitchTracer_"
 DEFAULT_SETTINGS_MODULE = "_settings.settings"
 ROLE = None
 LOADING_SHOCK = 0
+REQUIREMENTS = "requirements.txt"
 
 
 def commands(exec, env=None, settings=None, role="master", shock="0.4"):
@@ -26,12 +26,30 @@ def commands(exec, env=None, settings=None, role="master", shock="0.4"):
     :param role: [lowercase] identity for running, default "master"
     :param shock: [second] short shock time waiting whole processing on
     """
-    if exec != "runserver":
+    def runserver():
+        global st
+        import SwitchTracer_ as st
+        st.DEFAULT_ENVIRON_KEY = env.upper() if env else DEFAULT_ENVIRON_KEY
+        st.DEFAULT_SETTINGS_MODULE = settings or DEFAULT_SETTINGS_MODULE
+        global ROLE, LOADING_SHOCK
+        ROLE, LOADING_SHOCK = role, eval(str(shock))
+
+    def installdevel():
+        import time
+        print("Install Dependency ... ... %s" % time.ctime())
+        if not os.path.exists(REQUIREMENTS):
+            raise FileNotFoundError("Could not find Installation Requirements:\n %s" % os.path.abspath(REQUIREMENTS))
+        os.system("pip install -r %s" % REQUIREMENTS)
+        raise SystemExit("Done! %s" % time.ctime())
+
+    mapping = {
+        "runserver": runserver,
+        "installdevel": installdevel
+    }
+
+    if exec not in mapping.keys():
         raise SystemExit("use `python manager.py runserver --params` to start servers")
-    st.DEFAULT_ENVIRON_KEY = env.upper() if env else DEFAULT_ENVIRON_KEY
-    st.DEFAULT_SETTINGS_MODULE = settings or DEFAULT_SETTINGS_MODULE
-    global ROLE, LOADING_SHOCK
-    ROLE, LOADING_SHOCK = role, eval(str(shock))
+    mapping[exec]()
 
 
 if __name__ == '__main__':

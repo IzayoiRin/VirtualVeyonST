@@ -6,13 +6,13 @@ class StCourierMasterServer(st.courier.CourierMasterServer):
 
     redis_pool = None
     TOTAL_BLOCKS = 96
-
+    MAX_CONNECTION = 8
     MONITOR_ULRS = {
         "updates": r"/master/updates/(\d+)/(\d+)",
     }
 
     def read(self, pid: int, bid: int):
-        time.sleep(0.5)
+        # time.sleep(1)
         return super(StCourierMasterServer, self).read(pid, bid)
 
     def idempotence_url_updates(self, matched, request):

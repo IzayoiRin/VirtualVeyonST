@@ -57,6 +57,8 @@ FLASK = {
 
 COURIER = {
     "master": "GET@http://172.25.1.1:5000/master/updates/{pid}/{bid}",
+    # "master": "GET@http://172.25.1.18:5000/master/updates/{pid}/{bid}",
     "seeds": "PUT@http://172.25.1.1:5000/master/updates/seeds",
     "redis": "",
+    "sources": r"C:\izayoi\prj_veyon\SwitchTracer\SwitchTracer_\static\PACKS_INFO.json"
 }

@@ -1,6 +1,118 @@
+import os
 import redis
+import json
+from universal.exceptions import ConnectionErrors, ConfigureSyntaxErrors, \
+    NoLocationErrors, ContentTypeErrors, IllegalParametersErrors
 
-from universal.exceptions import ConnectionErrors, ConfigureSyntaxErrors
+
+# TODO: Specific Json Database
+class JsonField(object):
+    __type__ = object
+
+    def __init__(self, required=True):
+        self.required = required
+
+    def to(self, data):
+        if not isinstance(data, self.__type__):
+            raise ContentTypeErrors("Illegal field<%s>: %s" % (self.__type__, data))
+        return data
+
+
+class JsonStringField(JsonField):
+    __type__ = str
+
+
+class JsonLocalPathField(JsonStringField):
+
+    def to(self, data):
+        data = super(JsonLocalPathField, self).to(data)
+        if not os.path.exists(data):
+            raise NoLocationErrors("Could not find pack<%s>" % data)
+        return data
+
+
+class JsonIntegerField(JsonField):
+    __type__ = int
+
+
+class JsonArrayField(JsonField):
+    __type__ = list
+
+    def __init__(self, *recursion, required=True):
+        self.recursion = list(recursion)
+        super(JsonArrayField, self).__init__(required)
+
+    def to(self, data):
+        data = super(JsonArrayField, self).to(data)
+
+        def recursion_check(d):
+            if not len(self.recursion):
+                return
+            t = self.recursion.pop(0)
+            if not isinstance(t, JsonField):
+                raise IllegalParametersErrors("Checking Field must be courier.JsonField, not %s" % t)
+            for i in d:
+                t.to(i)
+                recursion_check(i)
+
+        recursion_check(data)
+        return data
+
+
+class JsonResult(object):
+
+    def __init__(self, pk: int):
+        self.pk = pk
+        self.fields = ["pk"]
+
+    def set_fields(self, k, v):
+        self.__setattr__(k, v)
+        self.fields.append(k)
+
+    def __str__(self):
+        return "JsonResults<%s>" % self.pk
+
+
+class JsonModelBase(object):
+
+    STATIC = ""
+    __data = None
+
+    def __new__(cls, *args, **kwargs):
+        cls.fields = {k: v for k, v in cls.__dict__.items() if isinstance(v, JsonField) and v.required}
+        return super().__new__(cls)
+
+    @classmethod
+    def connect2static(cls, static=None):
+        if not os.path.exists(static):
+            raise ConnectionErrors("Bad connection for Static Json Data, %s" % cls.STATIC)
+        cls.STATIC = static
+        with open(static, "r") as f:
+            cls.__data = json.loads(f.read())
+
+    @classmethod
+    def is_connected(cls):
+        return cls.__data is not None
+
+    def get(self, pk: int):
+        if not self.is_connected():
+            return
+        data = self.__data.get(str(pk))
+        result = JsonResult(pk)
+        for k, v in self.fields.items():
+            result.set_fields(k, v.to(data[k]))
+        return result
+
+
+class ServerPackJsonModel(JsonModelBase):
+
+    name = JsonStringField()
+    loc = JsonLocalPathField()
+    mem = JsonIntegerField()
+    tbk = JsonIntegerField()
+    spb = JsonIntegerField()
+    mcr = JsonArrayField(JsonIntegerField())
+    mds = JsonArrayField(JsonStringField())
 
 
 class KeyType(object):

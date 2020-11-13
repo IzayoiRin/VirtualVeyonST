@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from cores.contrib.couriermiddlewares import status
 from universal.exceptions import ConfigureSyntaxErrors, SettingErrors, NoLocationErrors
 
-S = "../tests/upload_.txt"
+S = "../templates/upload_.txt"
 N = 96
 
 
@@ -430,9 +430,9 @@ class CourierManager(object):
 
 
 def main():
-    M.source = "../tests/upload_.txt"
+    M.source = "../templates/upload_.txt"
     M.TOTAL_BLOCKS = 96
-    cm = CourierManager("test", download_path="../tests/")
+    cm = CourierManager("test", download_path="../templates/")
     np.random.seed(5)
     cm(verbose=True)
     MESSAGE_QUEUE.show("iloc", lambda x: x.startswith("!"))
@@ -443,7 +443,7 @@ def set_conf():
     per = np.ceil(X / N).astype(np.int)
     rg = np.ceil(X / 3).astype(np.int)
     rga = [rg, rg, X - 2 * rg]
-    with open("../tests/upload_.txt", 'rb') as f:
+    with open("../templates/upload_.txt", 'rb') as f:
         mds = [hashlib.md5(f.read(i)).hexdigest() for i in rga]
     print(X, N, per, rga, mds)
 

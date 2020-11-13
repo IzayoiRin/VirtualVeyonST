@@ -1,43 +1,52 @@
-import os
 import hashlib
 import re
-
-import numpy as np
 from flask import g
 
+import SwitchTracer_ as st
 from cores.contrib.couriermiddlewares import status
+from cores.contrib.couriermiddlewares.M.models import ServerPackJsonModel
 from cores.contrib.couriermiddlewares.utills import AtomicVolume
-from universal.exceptions import NoLocationErrors
+from universal.exceptions import SettingErrors
 from universal.tools.functions import base64_switcher
 
-TEMP_PACK_JSON = {
-    "100": r"C:\izayoi\prj_veyon\SwitchTracer\SwitchTracer_\cores\contrib\couriermiddlewares\tests\upload_.txt"
-}
 # counts, version
 CONNECTIONS = AtomicVolume(vol=[1, 0])
 
 
 class CourierMasterServer(object):
     redis_pool = None
-    TOTAL_BLOCKS = 96
+    STATIC_MODEL = None
     MAX_CONNECTION = 4
     MONITOR_ULRS = dict()
+    prefix = "COURIER"
     refused_dict = {"status": status.REFUSED}
+
+    def __init__(self, env=None):
+        self.environ = env
+        self.STATIC_MODEL = self.STATIC_MODEL or self.settings.get("sources")
+        self.source_model = self.connect2json_static()
+
+    @property
+    def settings(self):
+        settings = st.environ(self.environ).settings.get(self.prefix)
+        if settings is None:
+            raise SettingErrors("Can not find settings.COURIER!")
+        return settings
+
+    def connect2json_static(self):
+        ServerPackJsonModel.connect2static(self.STATIC_MODEL)
+        return ServerPackJsonModel()
 
     def clear(self):
         CONNECTIONS.reset()
 
     def read(self, pid: int, bid: int):
         # get pack location through pid
-        pack = TEMP_PACK_JSON.get(str(pid))
-        if pack is None or os.path.exists(pack) is False:
-            raise NoLocationErrors("Could not find pack<%s>" % pid)
+        pack = self.source_model.get(pid)
         # read block of pack through bid
-        X = os.path.getsize(pack)
-        storage_per_blocks = np.ceil(X / self.TOTAL_BLOCKS).astype(np.int)
-        with open(pack, "rb") as f:
-            s = min(storage_per_blocks, X - storage_per_blocks * bid)
-            f.seek(storage_per_blocks * bid, 0)
+        with open(pack.loc, "rb") as f:
+            s = min(pack.spb, pack.mem - pack.spb * bid)
+            f.seek(pack.spb * bid, 0)
             content = f.read(s)
             return {
                 "status": status.SUCCEEDED,

@@ -144,6 +144,15 @@ class AtomicVolume(object):
                 self.mutex.release()
 
 
+def bytes_unit_switch(x, units=None):
+    if units is None:
+        units = ["", "K", "M", "G", "T"]
+    unit = units.pop(0)
+    if x >= 1024 and len(units):
+        return bytes_unit_switch(x / 1024, units)
+    return x, unit
+
+
 def expr_redis_updates():
     import time
     MAX_EPOCH = int(5 * 1e5)

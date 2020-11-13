@@ -108,3 +108,8 @@ def base64_switcher(mode, encoding="utf-8", return_type=None):
             raise CodingErrors(e)
 
     return base64_
+
+
+if __name__ == '__main__':
+    s = base64_switcher("encode", return_type="utf-8")(r"C:\izayoi\prj_veyon\SwitchTracer\SwitchTracer_\test")
+    print(s)

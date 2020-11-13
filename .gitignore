@@ -1,6 +1,8 @@
 # project's dirs
 logs/*.log
 test*.py
+*.tar.gz
+
 # Byte-compiled / optimized / DLL files
 .idea/
 __pycache__/
