@@ -1,0 +1,72 @@
+import os
+import sys
+
+""" Kernel engines """
+KERNEL_ENGINES = {
+    "basements": "SwitchTracer.cores.bases.basements",
+    "activator": "SwitchTracer.cores.activators.common.Activator",
+    "celery": "SwitchTracer.cores.contrib.celerymiddlewares",
+    "flask": "SwitchTracer.cores.contrib.flaskmiddlewares",
+    "courier": "SwitchTracer.cores.contrib.couriermiddlewares",
+}
+
+LOG_LEVEL = "DEBUGS"
+
+DIR_ROOT = os.path.dirname(__file__)
+if DIR_ROOT not in sys.path:
+    sys.path.insert(0, DIR_ROOT)
+
+""" Server location """
+SERVERS = {
+    "volmanager": "servers.volmanager.Volumes",
+    "resoluter": "servers.resoluter.runmonitor",
+    "flask": "servers.flask_",
+}
+
+""" Resoluter """
+# <editor-fold desc="Resoluter reger">
+DEFAULT_MAX_POOL = 1
+DEFAULT_DYNAMIC_POOL_INFO = {"helper0": 40, "helper1": 100}
+# </editor-fold>
+
+""" Configure for Celery """
+CELERY = {
+    "routine_name": "SwitchTracer",
+    "tasks_search_pattern": r"^(([_a-zA-Z0-9\.]+\.)?task[_a-zA-Z0-9]*).py$",
+    # redis://:password@hostname:port/db_number
+    "Redis": {
+        "broker_url": "redis://:asdlllasd@172.25.1.18:6379/0",
+        "result_backend": "redis://:asdlllasd@172.25.1.18:6379/1"
+    },
+}
+
+""" Registered Tasks """
+# <editor-fold desc="Registered Tasks refer">
+DEFAULT_TASKS_ROOT = DIR_ROOT
+DEFAULT_TASKS_URLS = ["tasks.task1<task.*>", "tasks.task2<task.*>@tk", "tasks.tasks_test3"]
+DEFAULT_TASKS_PREFIX = "task"
+# </editor-fold>
+
+""" Configure for Flask """
+FLASK = {
+    "name": "SwitchTracer",
+    "@master": {
+        "DEBUG": False,
+        "HOST": "172.25.1.1",
+        "PORT": 5000
+    },
+    "@slaver": {
+        "DEBUG": False,
+        "HOST": "172.25.1.1",
+        "PORT": 5005
+    }
+}
+
+""" Configure for CourieR """
+COURIER = {
+    "master": "GET@http://172.25.1.1:5000/master/updates/{pid}/{bid}",
+    # "master": "GET@http://172.25.1.18:5000/master/updates/{pid}/{bid}",
+    "seeds": "PUT@http://172.25.1.1:5000/master/updates/seeds",
+    "redis": "",
+    "sources": os.path.join(os.path.join(DIR_ROOT, "static"), "PACKS_INFO.json")
+}

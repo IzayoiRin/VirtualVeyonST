@@ -13,11 +13,11 @@ os.environ["ST_FRAMEWORK_ROOT"] = FRAMEWORK_ROOT
 
 st = None
 DEFAULT_ENVIRON_KEY = "SwitchTracer"
-DEFAULT_SETTINGS_MODULE = "PySwitchTracer.settings.dev"
+DEFAULT_SETTINGS_MODULE = "{{Application}}.settings"
 ROLE = None
 LOADING_SHOCK = 0
-TASKS_ORGANIZER = "PySwitchTracer.tasks.organizer"
-REQUIREMENTS = "PySwitchTracer.requirements.devel"
+TASKS_ORGANIZER = "{{Application}}.tasks.organizer"
+REQUIREMENTS = "{{Application}}.requirements.devel"
 
 
 def commands(exec, env=None, settings=None, role="master", tasks=None, loglevel="INFO", shock="0.4"):
@@ -82,15 +82,15 @@ if __name__ == '__main__':
     # construct activators for prj.SwitchTracer on current environment
     activator = getattr(st, "activator")(cur_env.name)
     # setup global volume, include REGISTERS, RECORDS, REDIS, DICT
-    activator.setup_g_volume()
+    # TODO: activator.setup_g_volume
     # download_ redis connection used in Celery broker or backend
-    activator.test_celery_redis_net_link(st.VOLUMES.REDIS)
+    # TODO: activator.test_celery_redis_net_link
     # setup and download_ connection for Routine redis
-    activator.setup_g_redis_pool(st.VOLUMES.REDIS)
+    # TODO: activator.setup_g_redis_pool
     # setup Flask application on current environment
     fapp = activator.setup_flask_application(ROLE)
     # setup & start Resoluter to monitor RECORDS
-    activator.setup_resoluter_monitor(st.VOLUMES.DICT)
+    # TODO: activator.setup_resoluter_monitor
     """ Activator End """
     # </editor-fold>
 
@@ -102,12 +102,12 @@ if __name__ == '__main__':
           "|-Current Environ[{env}] loading from <{mod}>.\n{pid}\n" \
           "|-Current Redis connection: \n{redis}\n" \
           "|-Listen based on FLASK application[{role}]." \
-        .format(env=cur_env.name, mod=cur_env.settings_module,
-                pid="\n".join(
-                    [" * %s:%d" % (k, v) for k, v in st.VOLUMES.DICT.items() if k.startswith("pid_")]),
-                redis="\n".join(
-                    [" * %s://%s:%s:%s" % (k, v["host"], v["port"], v["db"]) for k, v in st.VOLUMES.REDIS.items()]),
-                role=ROLE)
+        # .format(env=cur_env.name, mod=cur_env.settings_module,
+        #         pid="\n".join(
+        #             [" * %s:%d" % (k, v) for k, v in st.VOLUMES.DICT.items() if k.startswith("pid_")]),
+        #         redis="\n".join(
+        #             [" * %s://%s:%s:%s" % (k, v["host"], v["port"], v["db"]) for k, v in st.VOLUMES.REDIS.items()]),
+        #         role=ROLE)
     print(msg)
     # Flask Server start
     fapp.run(host=fapp.config.get("HOST"), port=fapp.config.get("PORT"))
