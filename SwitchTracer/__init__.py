@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import Any
 
 from SwitchTracer.universal.tools.functions import import_from_path
 from SwitchTracer.universal.exceptions import SetupErrors
@@ -12,7 +13,7 @@ __ENGINES__ = "KERNEL_ENGINES"
 __basements__ = "basements"
 
 
-def environ(env_key=None):
+def environ(env_key: str = None) -> Any:
     engines = import_from_path(
         "%s.%s" % (os.environ.get(env_key or DEFAULT_ENVIRON_KEY), __ENGINES__), raise_=False
     )
